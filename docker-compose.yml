@@ -1,0 +1,12 @@
+services:
+  app:  # Name of the service
+    build: 
+      context: .  # The directory containing the Dockerfile
+      dockerfile: Dockerfile  # Explicitly specify the Dockerfile (optional)
+    ports:
+      - "8000:8000"  # Maps container port 8000 to host port 8000
+    volumes:
+      - .:/app  # Mounts the current directory into the container
+    environment:
+      - ENVIRONMENT=development  # Example environment variable
+    command: ["fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "8000"]
