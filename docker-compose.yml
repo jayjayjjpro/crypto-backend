@@ -1,12 +1,30 @@
 services:
-  app:  # Name of the service
-    build: 
+  app:
+    build:
       context: .  # The directory containing the Dockerfile
-      dockerfile: Dockerfile  # Explicitly specify the Dockerfile (optional)
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"  # Maps container port 8000 to host port 8000
     volumes:
       - .:/app  # Mounts the current directory into the container
     environment:
-      - ENVIRONMENT=development  # Example environment variable
-    command: ["fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "8000"]
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/mydatabase
+    depends_on:
+      - db  # Ensure PostgreSQL starts before the app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  db:
+    image: postgres:15
+    restart: always
+    ports:
+      - "5432:5432"  # Expose PostgreSQL on localhost
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mydatabase
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Persistent storage for PostgreSQL
+
+volumes:
+  pgdata:  # Named volume to persist database data

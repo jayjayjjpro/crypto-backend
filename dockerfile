@@ -4,6 +4,9 @@ FROM python:3.12-slim
 # Set the working directory inside the container
 WORKDIR /app
 
+# Install required system dependencies
+RUN apt-get update && apt-get install -y libpq-dev gcc
+
 # Copy the requirements file first to take advantage of Docker's caching mechanism
 COPY requirements.txt /app/
 
