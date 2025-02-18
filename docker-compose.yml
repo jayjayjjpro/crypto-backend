@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: .  # The directory containing the Dockerfile
+      context: .  
       dockerfile: Dockerfile
     ports:
       - "8000:8000"  # Maps container port 8000 to host port 8000
@@ -11,8 +11,9 @@ services:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/mydatabase
     depends_on:
-      - db  # Ensure PostgreSQL starts before the app
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+      - db  
+    command: >
+      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
 
   db:
     image: postgres:15
@@ -25,6 +26,17 @@ services:
       POSTGRES_DB: mydatabase
     volumes:
       - pgdata:/var/lib/postgresql/data  # Persistent storage for PostgreSQL
+  
+  pgadmin:  
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com  # Change this to my email
+      PGADMIN_DEFAULT_PASSWORD: admin  # Change this to a secure password
+    ports:
+      - "5050:80"  # Access pgAdmin at http://localhost:5050
+    depends_on:
+      - db
 
 volumes:
   pgdata:  # Named volume to persist database data
