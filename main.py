@@ -73,3 +73,54 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         "hmac_hash": hmac_hash,
         "s3_url": s3_file_url
     }
+
+# API Endpoint: List All Uploaded Files
+@app.get("/files/")
+async def list_files(db: Session = Depends(get_db)):
+    files = db.query(FileMetadata).all()
+    return files
+
+@app.get("/files/{filename}/download/")
+async def generate_presigned_url(filename: str):
+    s3_file_path = f"uploads/{filename}"
+    
+    try:
+        # Generate a pre-signed URL
+        presigned_url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": S3_BUCKET, "Key": s3_file_path},
+            ExpiresIn=3600  # 1 hour expiration time
+        )
+        return {"presigned_url": presigned_url}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/files/{filename}/verify/")
+async def verify_file_integrity(filename: str, db: Session = Depends(get_db)):
+    # Retrieve the file metadata from PostgreSQL
+    file_metadata = db.query(FileMetadata).filter(FileMetadata.filename == filename).first()
+
+    if not file_metadata:
+        return {"error": "File not found in database"}
+
+    # Download file from S3
+    s3_file_path = f"uploads/{filename}"
+
+    try:
+        s3_response = s3_client.get_object(Bucket=S3_BUCKET, Key=s3_file_path)
+        file_content = s3_response["Body"].read()
+    except Exception as e:
+        return {"error": f"Failed to fetch file from S3: {str(e)}"}
+
+    # Recalculate HMAC hash
+    recalculated_hmac = hmac.new(SECRET_KEY, file_content, hashlib.sha256).hexdigest()
+
+    # Compare with stored HMAC
+    is_valid = recalculated_hmac == file_metadata.hmac_hash
+
+    return {
+        "filename": filename,
+        "stored_hmac": file_metadata.hmac_hash,
+        "recalculated_hmac": recalculated_hmac,
+        "is_valid": is_valid
+    }

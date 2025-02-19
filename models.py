@@ -10,5 +10,5 @@ class FileMetadata(Base):
     filename = Column(String, nullable=False)
     filesize = Column(Integer, nullable=False)
     upload_time = Column(DateTime, default=func.now())
-    hmac_hash = Column(String, nullable=False)  # Store HMAC hash for file integrity
+    hmac_hash = Column(String, nullable=False)  
     s3_url = Column(String, nullable=False)
