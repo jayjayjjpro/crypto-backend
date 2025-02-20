@@ -7,12 +7,24 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 from models import FileMetadata, Base
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Load environment variables
 load_dotenv()
 
 # Initialize FastAPI
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow frontend requests (Change * to specific domain in prod)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Create database tables (if they don't exist)
 Base.metadata.create_all(bind=engine)
@@ -124,3 +136,8 @@ async def verify_file_integrity(filename: str, db: Session = Depends(get_db)):
         "recalculated_hmac": recalculated_hmac,
         "is_valid": is_valid
     }
+
+
+@app.get("/api/data")
+def get_data():
+    return {"message": "Hello from FastAPI!"}

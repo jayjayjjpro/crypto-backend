@@ -43,6 +43,24 @@ services:
       - db
     networks:
       - app_network
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"  
+    volumes:
+      - ./frontend:/app  # Mount frontend folder as a volume
+      - /app/node_modules  # Prevent overwriting node_modules
+    environment:
+    - CHOKIDAR_USEPOLLING=true  # Enable polling for hot reloading
+    - WATCHPACK_POLLING=true  # Additional polling fix
+    depends_on:
+      - app
+    command: npm run dev -- --host 0.0.0.0  # Start Vite in dev mode
+    networks:
+      - app_network
 
 volumes:
   pgdata:  
