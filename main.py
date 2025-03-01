@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 import os
 import hmac
 import hashlib
@@ -87,10 +88,29 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     }
 
 # API Endpoint: List All Uploaded Files
+# @app.get("/files/")
+# async def list_files(db: Session = Depends(get_db)):
+#     files = db.query(FileMetadata).all()
+#     return files
+
 @app.get("/files/")
 async def list_files(db: Session = Depends(get_db)):
     files = db.query(FileMetadata).all()
-    return files
+    valid_files = []
+
+    for file in files:
+        s3_file_path = f"uploads/{file.filename}"
+        
+        try:
+            s3_client.head_object(Bucket=S3_BUCKET, Key=s3_file_path)  # Check if file exists in S3
+            valid_files.append(file)
+        except ClientError:
+            # If file doesn't exist in S3, remove it from DB
+            db.delete(file)
+            db.commit()
+
+    return valid_files
+
 
 @app.get("/files/{filename}/download/")
 async def generate_presigned_url(filename: str):
@@ -138,6 +158,22 @@ async def verify_file_integrity(filename: str, db: Session = Depends(get_db)):
     }
 
 
-@app.get("/api/data")
-def get_data():
-    return {"message": "Hello from FastAPI!"}
+@app.delete("/files/{filename}/delete/")
+async def delete_file(filename: str, db: Session = Depends(get_db)):
+    s3_file_path = f"uploads/{filename}"
+
+    # Delete from S3
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET, Key=s3_file_path)
+    except ClientError as e:
+        return {"error": f"Failed to delete from S3: {str(e)}"}
+
+    # Delete from database
+    file_metadata = db.query(FileMetadata).filter(FileMetadata.filename == filename).first()
+    if file_metadata:
+        db.delete(file_metadata)
+        db.commit()
+
+    return {"message": f"File '{filename}' deleted successfully from S3 and database"}
+
+
