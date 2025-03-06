@@ -10,6 +10,9 @@ from models import FileMetadata, Base
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import AWS Cognito authentication module
+from auth import router as auth_router, add_auth_middleware
+
 
 # Load environment variables
 load_dotenv()
@@ -17,6 +20,12 @@ load_dotenv()
 # Initialize FastAPI
 app = FastAPI()
 
+
+# Add session management middleware (for Cognito authentication)
+add_auth_middleware(app)
+
+# Include authentication routes
+app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -104,10 +113,10 @@ async def list_files(db: Session = Depends(get_db)):
         try:
             s3_client.head_object(Bucket=S3_BUCKET, Key=s3_file_path)  # Check if file exists in S3
             valid_files.append(file)
-        except ClientError:
-            # If file doesn't exist in S3, remove it from DB
-            db.delete(file)
-            db.commit()
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                db.delete(file)
+                db.commit()
 
     return valid_files
 

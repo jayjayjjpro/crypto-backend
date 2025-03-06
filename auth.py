@@ -49,3 +49,12 @@ async def logout(request: Request):
     """Clear session and redirect to home"""
     request.session.pop("user", None)
     return RedirectResponse(url="/")
+
+@router.get("/")
+async def home(request: Request):
+    """Home page with login status"""
+    user = request.session.get("user")
+    if user:
+        return {"message": f"Hello, {user['email']}.", "logout_url": "/logout"}
+    else:
+        return {"message": "Welcome! Please log in.", "login_url": "/login"}
