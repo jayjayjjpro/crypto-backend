@@ -67,7 +67,20 @@ SECRET_KEY = b"supersecretkey"
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     file_content = await file.read()
-    
+
+    # Check if file already exists in PostgreSQL
+    existing_file = db.query(FileMetadata).filter(FileMetadata.filename == file.filename).first()
+
+    if existing_file:
+        print(f"Duplicate file detected: {existing_file.filename}")
+        print("testing this out")
+        return {
+            "error": "File already exists",
+            "filename": existing_file.filename,
+            "s3_url": existing_file.s3_url
+        }
+
+
     # Generate HMAC hash for file integrity
     hmac_hash = hmac.new(SECRET_KEY, file_content, hashlib.sha256).hexdigest()
 
@@ -95,6 +108,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         "hmac_hash": hmac_hash,
         "s3_url": s3_file_url
     }
+
 
 # API Endpoint: List All Uploaded Files
 # @app.get("/files/")
