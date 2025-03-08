@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Container, Typography, Box, Button } from "@mui/material";
+import { Container, Typography, Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import axios from "axios";
 import FileList from "./FileList";
 import UploadButton from "./UploadButton";
@@ -11,6 +11,7 @@ function FileStorage({ onLogout }) {
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -47,12 +48,25 @@ function FileStorage({ onLogout }) {
     formData.append("file", file);
 
     try {
-      await axios.post(`${API_BASE_URL}/upload/`, formData, { headers: { "Content-Type": "multipart/form-data" } });
-      fetchFiles();
+        const response = await axios.post(`${API_BASE_URL}/upload/`, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        console.log("API Response:", response.data); 
+
+        if (response.data.error) {
+            alert(`Error: ${response.data.error}\nFile: ${response.data.filename}`);
+        } else {
+            alert("File uploaded successfully!");
+            fetchFiles(); 
+        }
     } catch (error) {
-      console.error("Error uploading file:", error);
+        console.error("Error uploading file:", error);
+        alert("An error occurred while uploading the file.");
     }
-  };
+};
+
+
 
   const handleDownload = async (filename) => {
     try {
@@ -91,23 +105,44 @@ function FileStorage({ onLogout }) {
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", flexDirection: "column" }}>
-      <Container maxWidth="sm">
-        {/* Header with User Info and Logout Button */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h4" align="center">📂 My File Storage</Typography>
-          {user && <Typography variant="body1">👤 {user.email}</Typography>}
-          <Button variant="contained" color="secondary" onClick={onLogout}>
+      {/* User Info and Logout Button positioned at the top-right */}
+      {user && (
+        <Box sx={{ position: "absolute", top: 16, right: 16, display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="body1">👤 {user.email}</Typography>
+          <Button variant="contained" color="secondary" onClick={() => setOpenLogoutConfirm(true)}>
             Logout
           </Button>
         </Box>
+      )}
 
+      <Container maxWidth="sm">
+        {/* Header */}
+        <Typography variant="h4" align="center" sx={{ mb: 2 }}>📂 My File Storage</Typography>
+
+        {/* Upload Button */}
         <UploadButton onUpload={handleFileUpload} />
+
+        {/* File List */}
         <FileList files={files} onDownload={handleDownload} onVerify={handleVerify} onDelete={confirmDelete} />
 
+        {/* Delete Confirmation Dialog */}
         <DeleteDialog open={openDialog} file={selectedFile} onClose={() => setOpenDialog(false)} onDelete={handleDelete} />
       </Container>
+
+      {/* 🚀 Logout Confirmation Dialog (NEW) */}
+      <Dialog open={openLogoutConfirm} onClose={() => setOpenLogoutConfirm(false)}>
+        <DialogTitle>Confirm Logout</DialogTitle>
+        <DialogContent>
+          <DialogContentText>Are you sure you want to log out?</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenLogoutConfirm(false)} color="primary">Cancel</Button>
+          <Button onClick={onLogout} color="secondary" variant="contained">Confirm Logout</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
+  
 }
 
 export default FileStorage;

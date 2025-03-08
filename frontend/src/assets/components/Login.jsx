@@ -16,7 +16,7 @@ const Login = () => {
 
   return (
     <div style={{ textAlign: "center", paddingTop: "100px" }}>
-      <h1>Login to My File Storage</h1>
+      <h1>Login to My FYP Project</h1>
       <button onClick={handleLogin} style={{ padding: "10px 20px", fontSize: "16px" }}>
         Sign in with Cognito
       </button>
