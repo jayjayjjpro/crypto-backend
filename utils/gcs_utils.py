@@ -35,3 +35,15 @@ def download_from_gcs(object_name: str) -> bytes:
     bucket = client.bucket(BUCKET_NAME)
     blob = bucket.blob(object_name)
     return blob.download_as_bytes()
+
+def delete_from_gcs(object_name: str):
+    """
+    Deletes a file from the GCS bucket.
+
+    Args:
+    - object_name: Path/filename in the bucket to delete
+    """
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+    blob = bucket.blob(object_name)
+    blob.delete()

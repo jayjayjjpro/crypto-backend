@@ -70,12 +70,24 @@ function FileStorage({ onLogout }) {
 
   const handleDownload = async (filename) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/files/${filename}/download/`);
-      window.open(response.data.presigned_url, "_blank");
+      const response = await axios.get(`${API_BASE_URL}/files/${filename}/download/`, {
+        responseType: "blob", // Important!
+      });
+
+      // Create a download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename); // Force filename
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     } catch (error) {
-      console.error("Error generating download link:", error);
+      console.error("Error downloading file:", error);
+      alert("Failed to download file.");
     }
   };
+
 
   const handleVerify = async (filename) => {
     try {

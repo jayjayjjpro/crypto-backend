@@ -6,7 +6,8 @@ services:
     ports:
       - "8000:8000" 
     volumes:
-      - .:/app  # Mounts the current directory into the container
+      - .:/app                     # Mounts your whole project
+      - ./gcp:/app/gcp             # Mounts your local ./gcp to /app/gcp inside container
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/mydatabase
