@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from database import SessionLocal, engine
 from models import FileMetadata, Base
-from auth import router as auth_router, add_auth_middleware
+# from auth import router as auth_router, add_auth_middleware
 
 # New: Encryption utilities
 from utils.crypto_utils import encrypt_file, decrypt_file
@@ -26,8 +26,8 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CRE
 
 # Initialize FastAPI
 app = FastAPI()
-add_auth_middleware(app)
-app.include_router(auth_router)
+# add_auth_middleware(app)
+# app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,
