@@ -1,71 +1,71 @@
 services:
   app:
     build:
-      context: .  
-      dockerfile: Dockerfile
+      context: .  # Use current directory as build context
+      dockerfile: Dockerfile  # Specify Dockerfile to use
     ports:
-      - "8000:8000" 
+      - "8000:8000"  # Map host port 8000 to container port 8000
     volumes:
-      - .:/app                     # Mounts your whole project
-      - ./gcp:/app/gcp             # Mounts your local ./gcp to /app/gcp inside container
+      - .:/app  # Mount entire project into container
+      - ./gcp:/app/gcp  # Mount local gcp folder into container
     environment:
-      - ENVIRONMENT=development
-      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/mydatabase
+      - ENVIRONMENT=development  # Set environment to development
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/mydatabase  # DB connection URL
     depends_on:
-      - db  
+      - db  # Wait for db service to start
     command: >
-      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000" 
+    networks:
+      - app_network  # Connect to custom network
+
+  db:
+    image: postgres:15  # Use PostgreSQL 15 image
+    restart: always  # Always restart container if it stops
+    ports:
+      - "5432:5432"  # Expose DB port
+    environment:
+      POSTGRES_USER: postgres  # DB username
+      POSTGRES_PASSWORD: postgres  # DB password
+      POSTGRES_DB: mydatabase  # DB name
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Persist DB data
+    networks:
+      - app_network  # Connect to custom network
+  
+  pgadmin:
+    image: dpage/pgadmin4  # pgAdmin image for DB GUI
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com  # Admin email (change later)
+      PGADMIN_DEFAULT_PASSWORD: admin  # Admin password (change later)
+    ports:
+      - "5050:80"  # Access pgAdmin at localhost:5050
+    depends_on:
+      - db  # Wait for db to start
     networks:
       - app_network
 
-  db:
-    image: postgres:15
-    restart: always
-    ports:
-      - "5432:5432" 
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mydatabase
-    volumes:
-      - pgdata:/var/lib/postgresql/data 
-    networks:
-      - app_network
-  
-  pgadmin:  
-    image: dpage/pgadmin4
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com  # Change this to my email later
-      PGADMIN_DEFAULT_PASSWORD: admin  # Change this to a secure password later
-    ports:
-      - "5050:80"  # Access pgAdmin at http://localhost:5050
-    depends_on:
-      - db
-    networks:
-      - app_network
-  
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ./frontend  # Set build context for frontend
+      dockerfile: Dockerfile  # Use frontend Dockerfile
     ports:
-      - "5173:5173"  
+      - "5173:5173"  # Vite dev server port
     volumes:
-      - ./frontend:/app  # Mount frontend folder as a volume
+      - ./frontend:/app  # Mount frontend folder
       - /app/node_modules  # Prevent overwriting node_modules
     environment:
-    - CHOKIDAR_USEPOLLING=true  # Enable polling for hot reloading
-    - WATCHPACK_POLLING=true  # Additional polling fix
+      - CHOKIDAR_USEPOLLING=true  # Enable polling for live reload
+      - WATCHPACK_POLLING=true  # Extra fix for file watching
     depends_on:
-      - app
+      - app  # Wait for backend to start
     command: npm run dev -- --host 0.0.0.0  # Start Vite in dev mode
     networks:
       - app_network
 
 volumes:
-  pgdata:  
+  pgdata:  # Named volume for DB persistence
 
 networks:
   app_network:
-    driver: bridge
+    driver: bridge  # Use bridge network for container communication

@@ -14,7 +14,7 @@ from database import SessionLocal, engine
 from models import FileMetadata, Base
 # from auth import router as auth_router, add_auth_middleware
 
-# New: Encryption utilities
+# ncryption utilities
 from utils.crypto_utils import encrypt_file, decrypt_file
 from utils.kms_utils import encrypt_key_with_kms, decrypt_key_with_kms
 from utils.gcs_utils import upload_to_gcs, download_from_gcs, delete_from_gcs
