@@ -7,7 +7,7 @@ const UploadButton = ({ onUpload }) => {
     <Stack direction="row" justifyContent="center" sx={{ mb: 2 }}>
       <Button variant="contained" color="primary" startIcon={<CloudUploadIcon />} component="label">
         Upload File
-        <input type="file" hidden onChange={onUpload} />
+        <input type="file" accept=".txt" hidden onChange={onUpload} />
       </Button>
     </Stack>
   );

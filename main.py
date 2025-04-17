@@ -7,14 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from botocore.exceptions import ClientError
 import boto3
-from fastapi.responses import Response
 from dotenv import load_dotenv
 
 from database import SessionLocal, engine
 from models import FileMetadata, Base
-# from auth import router as auth_router, add_auth_middleware
 
-# ncryption utilities
+# encryption utilities
 from utils.crypto_utils import encrypt_file, decrypt_file
 from utils.kms_utils import encrypt_key_with_kms, decrypt_key_with_kms
 from utils.gcs_utils import upload_to_gcs, download_from_gcs, delete_from_gcs
@@ -31,8 +29,6 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CRE
 
 # Initialize FastAPI
 app = FastAPI()
-# add_auth_middleware(app)
-# app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -126,7 +122,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     }
 
 
-# List all uploaded files (that still exist in S3)
+# List all uploaded files in S3
 # Checks against S3 — if a file is missing there, its metadata is removed from the database
 @app.get("/files/")
 async def list_files(db: Session = Depends(get_db)):
